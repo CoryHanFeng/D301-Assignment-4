@@ -1,0 +1,75 @@
+---
+title: "Data301 Assignment 4"
+author: "Cory Stalker"
+date: "2026-09-24"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Library Loading
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+```
+
+#--------------------------------
+
+# Question 1
+
+## Part 1 (10%): Read and summarise the analysis of alternatives made by Wicklin
+
+(2017). This article gives you a link to the article that sparked the
+discussion (Hyndman & Fan, 1996), and we strongly recommend you also
+read it. Which type of order statistics would you use and why? Which is
+the default type of order statistics your version of R/Python uses?
+
+Answer: Hyndman & Fan showed that statistical software computes sample
+quantatiles in multiple different ways (9). Three versions of quantile
+computation are based on rounding and the other six are based off linear
+interpolation (a way to estimate an unknown value that lies between two
+known data points, assuming a linear relationship). SAS uses type 2 and
+R uses type 7.
+
+Wicklin writes a general formula to cover all quantile estimates, q =
+(1-$\lambda$) x[j] + $\lambda$ x[j+1], where j depends on the values of
+p, N and m (j = Np + m). Wicklin compares the definitions visually on a
+10-observation dataset and on 100 quantiles from a uniform
+distributions, also comparing the R and SAS defaults.
+
+Wicklin notes that the rounding-based types return an observed value or
+the average of two neighbours, while the interpolation types may return
+any value in the data's range. For the dataset {0,1,1,1,2,2,2,4,5,8},
+the two defaults disagree on this dataset. For the first quartile, both
+give 1. However, for the third quartile, SAS (or type 2) gives 4, while
+R (or type 7) gives \~3.5. Applying these results to:
+$\hat{\lambda}_{IQR}$(X) =
+$\frac{ln3}{q_{\frac{3}{4}}(X) - q_{\frac{1}{4}}(X)}$ The estimate of
+$\lambda$ is from the following: Type 2: $\frac{ln(3)}{4-1}$ =
+$\frac{1.098612}{3}$ = \~0.3662 (4dp) Type 7: $\frac{ln(3)}{3.5-1}$ =
+$\frac{1.098612}{2.5}$ = \~0.4394 (4dp) A difference of of \~0.0732
+(4dp) or \~18.17% is observed between the two estimates of $\lambda$.
+Although Wicklin states that with n = 100 \~N(0, 1) the difference are
+nearly negligible.
+
+The experiments Wicklin run show that the choice of quantile computation
+type matter for smaller samples. However for larger scale data, the
+differences are negligible. He does not recommend an exact type of
+quantile computation, but mentions that "most data analysts just accept
+the default method for whatever software they are using"[1].
+
+I would most likely use type 8, this is because it is recommended by
+Hyndman and Fan (1996) [2]. Type 8 can be defined independently of the
+underlying distribution. Wicklin showed that the definitions differ
+mostly for small samples, so the choice matters when n is small. My
+current version of R ("R version 4.4.2 (2024-10-31)") uses type 7 as the
+default type of order statistics.
+
+# References:
+
+[1]
+<https://blogs.sas.com/content/iml/2017/05/24/definitions-sample-quantiles.html>
+\n
+[2]<https://www.amherst.edu/media/view/129116/original/Sample+Quantiles.pdf>
