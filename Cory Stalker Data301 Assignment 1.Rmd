@@ -67,6 +67,51 @@ mostly for small samples, so the choice matters when n is small. My
 current version of R ("R version 4.4.2 (2024-10-31)") uses type 7 as the
 default type of order statistics.
 
+## Part 2 (20%):
+
+You suspect that $\hat{\lambda}_{IQR}$ is biased, so derive and
+implement a first-order bootstrap bias corrected estimator based on
+$\hat{\lambda}_{IQR}$. Denote it $\hat{lambda}\_{IQR}$. You may fix the
+number of bootstrap replications in $𝐵$ = 200 for every input sample.
+
+Answer:
+
+let $\frac{ln3}{\hat{q}_{\frac{3}{4}}(X) - \hat{q}_{\frac{1}{4}}(X)}$
+with quartiles be computed by type 8. For an estimator $\hat{\theta}$ of
+$\theta$, the bias is $B(\hat{\theta}) = E(\hat{\theta}) - \theta$, here
+$\theta = \lambda$ and $\hat{\theta} = \hat{\lambda}_{IQR}$. The bias
+$B(\hat{\lambda}_{IQR}) = E(\hat{\lambda}_{IQR}) - \lambda$ (Monte Carlo
+lecture, slide 21/34 (or pdf page 43), under the
+law$D(\lambda) = EXP(\lambda)$ of $X = (X_1,X_2...X_N)$. This can't be
+computed because $D(\lambda)\$$ depends on the unknown,so I will
+estimate it by the bootstrap.I resample the observed x with replacement
+B = 200 times and calculate $\hat{\lambda}\_{IQR}((x)(b))$ (Monte Carlo
+slide 22 or pdf page 44), giving:
+
+$\hat{B}(\hat{\lambda}_{{IQR}}) = B^{-1} \sum_{b=1}^{B} \hat{\lambda}_{{IQR}}\bigl(x^{*(b)}\bigr) - \hat{\lambda}_{{IQR}}(x).$
+
+subtracting it gives:
+
+$\tilde{\lambda}= \hat{\lambda}_{{IQR}}(x) - \hat{B}(\hat{\lambda}_{{IQR}}) = 2\,\hat{\lambda}_{{IQR}}(x) - B^{-1} \sum_{b=1}^{B} \hat{\lambda}_{{IQR}}\bigl(x^{*(b)}\bigr).$
+
+```{r}
+lambda_iqr = function(x){ 
+  log(3) / diff(quantile(x, c(.25, .75), type = 8, names = FALSE))
+}
+
+lambda_tilde = function(x, B =200){
+  lamda_hat = lambda_iqr(x)
+  lambda_bootstrap = replicate(B, lambda_iqr(sample(x, replace = TRUE)))
+  lambda_bootstrap = lambda_bootstrap[is.finite(lambda_bootstrap)]
+  2 * lamda_hat - mean(lambda_bootstrap)
+}
+
+set.seed(301)
+# sample 30 random numbers from an exponential distribution
+x = rexp(30, rate = 1)
+c(lam_iqr = lambda_iqr(x), lam_tilde = lambda_tilde(x))
+```
+
 # References:
 
 [1]
