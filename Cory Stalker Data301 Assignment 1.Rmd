@@ -251,7 +251,7 @@ ggplot(variability_df, aes(x = year, y= sd))+
 From both the range table and the Variability of quarterly production by
 year plot, it is obvious that variance is not constant over time. The
 within-year standard deviation of quarterly production for each year
-shows
+shows as
 
 # References:
 
