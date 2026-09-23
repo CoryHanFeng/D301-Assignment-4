@@ -12,7 +12,10 @@ editor_options:
 
 ```{r setup, include=FALSE}
 library(tidyverse)
-
+library(fpp2)
+library(ggplot2)
+library(lubridate)
+library(pander)
 ```
 
 #--------------------------------
@@ -86,7 +89,7 @@ law$D(\lambda) = EXP(\lambda)$ of $X = (X_1,X_2...X_N)$. This can't be
 computed because $D(\lambda)\$$ depends on the unknown,so I will
 estimate it by the bootstrap.I resample the observed x with replacement
 B = 200 times and calculate $\hat{\lambda}\_{IQR}((x)(b))$ (Monte Carlo
-slide 22 or pdf page 44), giving:
+slide 22 or pdf page 44 and Monte Carlo lecture recording), giving:
 
 $\hat{B}(\hat{\lambda}_{{IQR}}) = B^{-1} \sum_{b=1}^{B} \hat{\lambda}_{{IQR}}\bigl(x^{*(b)}\bigr) - \hat{\lambda}_{{IQR}}(x).$
 
@@ -111,6 +114,144 @@ set.seed(301)
 x = rexp(30, rate = 1)
 c(lam_iqr = lambda_iqr(x), lam_tilde = lambda_tilde(x))
 ```
+
+## Part 3 (20%): Make a Monte Carlo experiment comparing these three estimators. Use as parameter space $\Lambda \times$ 𝑁, where $\lambda \in\Lambda$ = {.1, 1, 10} and $n \in$ 𝑁 = {5, 30, 100}. Use the mean square error as the sole metric for your analysis. Report your results. Justify your choice(s) of the number of replications for each $\lambda$ and each $n$. You may want to check the book by Robert & Casella (2009); it is available in our library.
+
+```{r}
+lambda_ml = function(x) 1 / mean(x)
+
+lambda = c(.1, 1,10)
+n = c(5,30,100)
+rmax = 1000
+
+results = data.frame(lambda = numeric(0), n =numeric(0)
+                     ,mse_max_likelihood = numeric(0), mse_iqr = numeric(0), mse_tilde = numeric(0))
+
+for (l in lambda){
+  for (num in n){
+    squared_err_ml = squared_err_iqr = squared_err_tilde = numeric(rmax)
+    for (r in 1:rmax){
+      x =rexp(num, rate = l)
+      squared_err_ml[r] = (lambda_ml(x) - l)^2
+      squared_err_iqr[r] = (lambda_iqr(x) - l)^2
+      squared_err_tilde[r] = (lambda_tilde(x) - l)^2
+    }
+    
+    results = rbind(results, data.frame(
+      l = l, n= num,
+      mse_max_likelihood = mean(squared_err_ml),
+      mse_iqr = mean(squared_err_iqr, na.rm = TRUE),
+      mse_tilde = mean(squared_err_tilde, na.rm = TRUE)
+    ))
+  }
+}
+results
+```
+
+```{r}
+lambda <- 10; n_val <- 5; rmax <- 5000
+se <- numeric(rmax)
+for (r in 1:rmax) {
+  x <- rexp(n_val, rate = lambda)
+  se[r] <- (lambda_tilde(x) - lambda)^2
+}
+summary(se)
+sort(se, decreasing = TRUE)[1:10]   # look at the biggest outliers
+```
+
+#--------------------------------
+
+# Question 2
+
+## Part 1: What is the frequency of the series? How can you determine this from the data and/or the time-series plot?
+
+```{r, fig.width= 12, fig.height = 6}
+data(ausbeer)
+ausbeer
+
+cat("Frequency:",frequency(ausbeer), "\n")
+cat("Start:",start(ausbeer),"\n")
+cat("End:",end(ausbeer))
+summary_df = data.frame(
+  Frequency = frequency(ausbeer),
+  Start = paste(start(ausbeer)),
+  End = paste(end(ausbeer))
+)
+
+
+autoplot(ausbeer) +
+  labs(title = "Australian Quarterly Beer Production", x = "Year", y = "Megalitres") +
+  geom_point(size = 1.5, color = "red")+
+  scale_x_continuous(breaks = seq(1956, 2010, by =1))+
+  theme(axis.text.x = element_text(angle = 45, hjust =1))
+  
+```
+
+The Frequency of the series can be found by using the frequency()
+function on the data, this returns 4 observations per (quarterly data).
+You can also visualise this in two ways, the data table has 4 columns
+for each year, and the time series plot shows 4 points within each year.
+
+## Part 2: Describe the overall behaviour of the series. Is there evidence of a long-term trend?
+
+```{r}
+autoplot(ausbeer) +
+  labs(title = "Australian Quarterly Beer Production", x = "Year", y = "Megalitres")
+```
+
+The time series graph does not show a single, consistent or monotonic
+trend across the datasets whole period. Production rises steadily from
+around 250 megalitres to \~550 megalitres by the mid 1970s. It then
+plateaus, oscillating without any clear patterns to \~1990. From the
+1990s onwards, production declined gradually to around \~450 - \~500
+megalitres by 2010.
+
+## Part 3: Is there evidence of seasonality? If so, describe the seasonal pattern.
+
+Yes there is a clear pattern of seasonality, this is visible in nearly
+every year. Q4 is consistently the peak quarter across the entire series
+(1956-2009), with production rising sharply toward the end of each year.
+Production sharply rises towards the end of year which makes sense as
+this is summer and Christmas time in Australia and New Zealand, where
+beer consumption would be expected to rise.
+
+The low point is usually Q2 in most years, however in 7 years this
+differs (1975, 1978, 1984m 1990, 1993, 1996, and 2002). In these years
+Q3 is equal to or lower than Q2 instead. So while the overall trend is a
+rise in Q4 followed by a fall is stable, the yearly-quarter of the
+minimum varies throughout the years.
+
+## Part 4: Does the variability appear constant over time? Explain what you see in the plot and whether a transformation might be appropriate.
+
+```{r}
+beer_matrix = matrix(window(ausbeer, start = c(1956,1),end = c(2009, 4)), ncol = 4, byrow = TRUE)
+
+rownames(beer_matrix) = 1956:2009
+yearly_variance = apply(beer_matrix, 1 ,var)
+yearly_standard_dev = apply(beer_matrix, 1, sd)
+yearly_range = apply(beer_matrix, 1, function(row) max(row) - min(row))
+
+range_df = data.frame(
+  year = 1956:2009,
+  range = yearly_range
+)
+
+pander(range_df, title = "Yearly Range of Beer Production")
+
+variability_df = data.frame(
+  year = 1956:2009,
+  sd = yearly_standard_dev
+)
+ggplot(variability_df, aes(x = year, y= sd))+
+  geom_line() +
+  labs(title = "Variability of quarterly production by year",
+       x = "Year", y="Within-Year standard deviation (megalitres)")
+```
+
+From both the range table and the Variability of quarterly production by
+year plot, it is obvious that variance is not constant over time. The
+within-year standard deviation of quarterly production for each year
+shows
 
 # References:
 
