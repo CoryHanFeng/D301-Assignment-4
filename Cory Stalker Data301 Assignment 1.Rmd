@@ -8,6 +8,10 @@ editor_options:
     wrap: 72
 ---
 
+# Github Repository Link:
+
+<https://github.com/CoryHanFeng/D301-Assignment-4>
+
 # Library Loading
 
 ```{r setup, include=FALSE}
@@ -30,7 +34,7 @@ read it. Which type of order statistics would you use and why? Which is
 the default type of order statistics your version of R/Python uses?
 
 Answer: Hyndman & Fan showed that statistical software computes sample
-quantatiles in multiple different ways (9). Three versions of quantile
+quantiles in multiple different ways (9). Three versions of quantile
 computation are based on rounding and the other six are based off linear
 interpolation (a way to estimate an unknown value that lies between two
 known data points, assuming a linear relationship). SAS uses type 2 and
@@ -38,9 +42,9 @@ R uses type 7.
 
 Wicklin writes a general formula to cover all quantile estimates, q =
 (1-$\lambda$) x[j] + $\lambda$ x[j+1], where j depends on the values of
-p, N and m (j = Np + m). Wicklin compares the definitions visually on a
-10-observation dataset and on 100 quantiles from a uniform
-distributions, also comparing the R and SAS defaults.
+p, N and m (j = floor(Np + m)). Wicklin compares the definitions
+visually on a 10-observation dataset and on 100 observations from a
+uniform distributions, also comparing the R and SAS defaults.
 
 Wicklin notes that the rounding-based types return an observed value or
 the average of two neighbours, while the interpolation types may return
@@ -53,15 +57,15 @@ $\frac{ln3}{q_{\frac{3}{4}}(X) - q_{\frac{1}{4}}(X)}$ The estimate of
 $\lambda$ is from the following: Type 2: $\frac{ln(3)}{4-1}$ =
 $\frac{1.098612}{3}$ = \~0.3662 (4dp) Type 7: $\frac{ln(3)}{3.5-1}$ =
 $\frac{1.098612}{2.5}$ = \~0.4394 (4dp) A difference of of \~0.0732
-(4dp) or \~18.17% is observed between the two estimates of $\lambda$.
-Although Wicklin states that with n = 100 \~N(0, 1) the difference are
-nearly negligible.
+(4dp) is observed between the two estimates of $\lambda$. Although
+Wicklin states that with n = 100 \~N(0, 1) the differences are nearly
+negligible.
 
 The experiments Wicklin run show that the choice of quantile computation
 type matter for smaller samples. However for larger scale data, the
 differences are negligible. He does not recommend an exact type of
 quantile computation, but mentions that "most data analysts just accept
-the default method for whatever software they are using"[1].
+the default method for whichever software they are using"[1].
 
 I would most likely use type 8, this is because it is recommended by
 Hyndman and Fan (1996) [2]. Type 8 can be defined independently of the
@@ -74,22 +78,23 @@ default type of order statistics.
 
 You suspect that $\hat{\lambda}_{IQR}$ is biased, so derive and
 implement a first-order bootstrap bias corrected estimator based on
-$\hat{\lambda}_{IQR}$. Denote it $\hat{lambda}\_{IQR}$. You may fix the
+$\hat{\lambda}_{IQR}$. Denote it $\tilde{\lambda}$. You may fix the
 number of bootstrap replications in $𝐵$ = 200 for every input sample.
 
 Answer:
 
-let $\frac{ln3}{\hat{q}_{\frac{3}{4}}(X) - \hat{q}_{\frac{1}{4}}(X)}$
-with quartiles be computed by type 8. For an estimator $\hat{\theta}$ of
+let $\hat{\lambda}_{IQR} =$
+$\frac{ln3}{\hat{q}_{\frac{3}{4}}(X) - \hat{q}_{\frac{1}{4}}(X)}$ with
+quartiles be computed by type 8. For an estimator $\hat{\theta}$ of
 $\theta$, the bias is $B(\hat{\theta}) = E(\hat{\theta}) - \theta$, here
 $\theta = \lambda$ and $\hat{\theta} = \hat{\lambda}_{IQR}$. The bias
 $B(\hat{\lambda}_{IQR}) = E(\hat{\lambda}_{IQR}) - \lambda$ (Monte Carlo
-lecture, slide 21/34 (or pdf page 43), under the
-law$D(\lambda) = EXP(\lambda)$ of $X = (X_1,X_2...X_N)$. This can't be
-computed because $D(\lambda)\$$ depends on the unknown,so I will
+lecture, slide 21/34 (or pdf page 43), under the law
+$D(\lambda) = EXP(\lambda)$ of $X = (X_1,X_2...X_N)$. This can't be
+computed because $D(\lambda)$ depends on the unknown $\lambda$,so I will
 estimate it by the bootstrap.I resample the observed x with replacement
-B = 200 times and calculate $\hat{\lambda}\_{IQR}((x)(b))$ (Monte Carlo
-slide 22 or pdf page 44 and Monte Carlo lecture recording), giving:
+B = 200 times and calculate $\hat{\lambda}_{IQR}(x^{*(b)})$ (Monte Carlo
+slide 22 or pdf page 44), giving:
 
 $\hat{B}(\hat{\lambda}_{{IQR}}) = B^{-1} \sum_{b=1}^{B} \hat{\lambda}_{{IQR}}\bigl(x^{*(b)}\bigr) - \hat{\lambda}_{{IQR}}(x).$
 
@@ -118,6 +123,7 @@ c(lam_iqr = lambda_iqr(x), lam_tilde = lambda_tilde(x))
 ## Part 3 (20%): Make a Monte Carlo experiment comparing these three estimators. Use as parameter space $\Lambda \times$ 𝑁, where $\lambda \in\Lambda$ = {.1, 1, 10} and $n \in$ 𝑁 = {5, 30, 100}. Use the mean square error as the sole metric for your analysis. Report your results. Justify your choice(s) of the number of replications for each $\lambda$ and each $n$. You may want to check the book by Robert & Casella (2009); it is available in our library.
 
 ```{r}
+set.seed(301)
 lambda_ml = function(x) 1 / mean(x)
 
 lambda = c(.1, 1,10)
@@ -126,6 +132,7 @@ rmax = 1000
 
 results = data.frame(lambda = numeric(0), n =numeric(0)
                      ,mse_max_likelihood = numeric(0), mse_iqr = numeric(0), mse_tilde = numeric(0))
+
 
 for (l in lambda){
   for (num in n){
@@ -138,7 +145,7 @@ for (l in lambda){
     }
     
     results = rbind(results, data.frame(
-      l = l, n= num,
+      lambda = l, n= num,
       mse_max_likelihood = mean(squared_err_ml),
       mse_iqr = mean(squared_err_iqr, na.rm = TRUE),
       mse_tilde = mean(squared_err_tilde, na.rm = TRUE)
@@ -149,6 +156,7 @@ results
 ```
 
 ```{r}
+set.seed(301)
 lambda <- 10; n_val <- 5; rmax <- 5000
 se <- numeric(rmax)
 for (r in 1:rmax) {
@@ -158,6 +166,21 @@ for (r in 1:rmax) {
 summary(se)
 sort(se, decreasing = TRUE)[1:10]   # look at the biggest outliers
 ```
+
+Using the parameters B=200 bootstrap resamples and R = 1000 Monte Carlo
+replications per cell with seed = 301. $\hat{\lambda}_{ML}$ has the
+lowest MSE in every cell, since it uses the full sample rather than just
+two order statistics.
+
+R = 1000 was adequate for all cells except $\tilde{\lambda}$ at n = 5,
+where MSE is unreliable at any R (although lecturer mentioned that
+around 5000 is a good number (5000 was taking too long)). A diagnostic
+run showed a median squared error of 91 but a mean of 40,638, dominated
+by a few extreme outliers (max value of 80658547). This might happen
+because bootstrap resamples of only 5 values contain repeats, which
+would produce a near-zero IQR and an extreme $\hat{\lambda}_{IQR}(x^*)$,
+which the bias correction then amplifies. Increasing R does not fix this
+and can create even larger outliers.
 
 #--------------------------------
 
@@ -200,26 +223,32 @@ autoplot(ausbeer) +
 ```
 
 The time series graph does not show a single, consistent or monotonic
-trend across the datasets whole period. Production rises steadily from
+trend across the dataset's whole period. Production rises steadily from
 around 250 megalitres to \~550 megalitres by the mid 1970s. It then
-plateaus, oscillating without any clear patterns to \~1990. From the
+plateaus, oscillating without any clear direction to \~1990. From the
 1990s onwards, production declined gradually to around \~450 - \~500
 megalitres by 2010.
+
+Overall there is evidence of a long term trend, but it is non-monotonic.
+The time series graph shows a rise, a plateau period and a decline
+rather than moving consistently in one direction throughout the time
+period.
 
 ## Part 3: Is there evidence of seasonality? If so, describe the seasonal pattern.
 
 Yes there is a clear pattern of seasonality, this is visible in nearly
 every year. Q4 is consistently the peak quarter across the entire series
 (1956-2009), with production rising sharply toward the end of each year.
-Production sharply rises towards the end of year which makes sense as
-this is summer and Christmas time in Australia and New Zealand, where
-beer consumption would be expected to rise.
+A rise in Production towards the end of year which makes sense as this
+is summer and Christmas time in Australia, where beer consumption would
+be expected to rise.
 
-The low point is usually Q2 in most years, however in 7 years this
-differs (1975, 1978, 1984m 1990, 1993, 1996, and 2002). In these years
-Q3 is equal to or lower than Q2 instead. So while the overall trend is a
-rise in Q4 followed by a fall is stable, the yearly-quarter of the
-minimum varies throughout the years.
+The low point is usually Q2 in most years, however in 7 out of 54 years
+this differs (1975, 1978, 1984, 1990, 1993, 1996, and 2002). In these
+years Q3 is equal to or lower than Q2 instead. So while the overall
+seasonal pattern, a rise in Q4 followed by a fall, is stable across the
+whole time series, the yearly-quarter of the minimum varies throughout
+the years.
 
 ## Part 4: Does the variability appear constant over time? Explain what you see in the plot and whether a transformation might be appropriate.
 
@@ -257,22 +286,21 @@ year plot, it is obvious that variance is not constant over time. The
 within-year standard deviation of quarterly production for each year
 shows around 3 periods of variability.
 
--   From around 1956 to \~late 1960s, the standard deviation is low and
-    relatively stable variability, with standard deviation within the
-    range \~36 to \~50.
--   From the late 1960s to 1990, there is a sharp rise, where the
-    standard deviation remains high with a volatile variability, with sd
-    ranging from 45 to nearly 80, noticeable features include the two
-    large peaks at \~1973 and 1990, and a low sd in the year 1980.
--   From 1990 to 2009 there seems to be a gradual decline in
-    variability, with sd lowering back to the 40-50s. A noticeable
-    feature is a very sharp dip in \~2004 where sd falls to under 30.
+- From around 1956 to \~late 1960s, the standard deviation is low and
+  relatively stable, with standard deviation within the range \~36 to
+  \~50.
+- From the late 1960s to early 1990, there is a sharp rise, where the
+  standard deviation remains high with a volatile variability, with sd
+  ranging from 45 to nearly 80.
+- From the early 1990's to 2009 there seems to be a gradual decline in
+  variability, with sd lowering back to the 40-50s. A noticeable feature
+  is a very sharp dip in \~2004 where sd falls to under 30.
 
-Because variability changes substantially overtime instead of staying
-constant. A variance stabilising transformation such as a log
+Because variability changes substantially over time instead of staying
+constant, a variance stabilising transformation such as a log
 transformation may be appropriate to stabilise the variance before
 modelling. Aligning with step 1 of the time series analysis, which is to
-transform and ensure the variance is stable (Time Series - Alejandro).
+transform and ensure the variance is stable [3].
 
 ## Part 5: Are there any observations that you would regard as unusual? Identify them and explain why they attract attention.
 
@@ -290,7 +318,7 @@ dataset:
 
 Using which.max() and which.min(), the global maximum is 599 megalitres
 in 1990 Q4, and the global minimum is 213 megalitres in 1956 Q2. The
-minimum is not particularly suprising as it as the start of the time
+minimum is not particularly suprising as it is the start of the time
 series, and consistent with the strong upward trend identified. The
 maximum point is quite interesting, in 1988 there is a peak of 598 and
 in 1990, there is the global peak of 599, both of these values are
@@ -298,10 +326,10 @@ either near or record breaking Q4 values, with 1989 dropping back to 567
 in between. This represents an unsual pattern rather than a single
 isolated spike. This anomalous pattern is also shown in the within year
 variability identified in part 4, reinforcing that 1988-1990 was a
-strange event for the series.
+strange period for the series.
 
 There is also a secondary unusual point in 2004 Q4 (454), which is 30-35
-megalitres below both the preceeding and following years Q4 values (490
+megalitres below both the preceeding and following year's Q4 values (490
 in 2003 and 482 in 2005), despite Q1-Q3 of 2004 being ordinary. This
 single low quarter explains the sharp dip in within-year variability
 seen around 2004 in the Part 4 Analysis.
@@ -313,9 +341,91 @@ ggseasonplot(ausbeer)+
   labs(title = "Seasonal Plot of Australian Quarterly Beer Production", x = "Quarterly", y = "Megalitres") + guides(colour = guide_legend(reverse=TRUE))
 ```
 
+```{r}
+q1 = beer_matrix[,1]
+q2 = beer_matrix[,2]
+q3 = beer_matrix[,3]
+q4 = beer_matrix[,4]
+c(Q1 = sd(q1),Q2 = sd(q2),Q3 = sd(q3),Q4 = sd(q4))
+```
+
+The seasonal plot shows two things that aren't as visible in the
+ordinary time-series plot. The consistency of the Q1-Q2 dip, Q3 trough
+and Q4 rise pattern across most years is easy to find compared to the
+original time series graph where you must trace it across one long
+continuous line.\
+
+Year-to-year variability is not uniform across all quarters, the lines
+at Q4 appear to fan out more widely than in the middle of the cycle,
+this suggests that Q4 production may vary more from year to year than
+other quarters. To check this, the standard deviation was computed for
+the quarters across all 54 years, Q1-Q3 (\~69 - \~74 megalitres) share
+similar standard deviations, however Q4 is noticeably higher (\~84
+megalitres), confirming it varies more from year to year.
+
+## Part 7: Plot the seasonal subseries. Which quarters have the highest and lowest typical values? Is the seasonal pattern stable over time?
+
+```{r}
+ggsubseriesplot(ausbeer) +
+  labs(title = "Seasonal Subseries Plot of Australian Quarterly Beer Production",
+       x= "Quarter", y = "Megalitres")
+```
+
+The subseries plot shows that Q4 has the highest typical value (mean
+around \~480) and Q2 the lowest (mean around \~375), matching the
+pattern from previous questions.
+
+The seasonal pattern is quite stable over time in two respects. Each
+quarter's individual subseries follows the same overall shape, rising
+from the 1950s, peaking around the mid 1970s to early 1990's then
+declining, confirming that the long term trend in Q2 holds consistently
+within every quarter and not just the combined series. Secondly, the
+ranking of quarters (Q2 lowest, Q4 highest) holds for the majority of
+the years.
+
+The pattern is not perfectly stable throughout all years though. As
+previously mentioned in questions 2.3 and 2.6, the quarter of the
+minimum (Q2 or Q3) varies in a minority of years, and Q4's year-to-year
+variability (sd = \~84) is noticeably higher than the other quarters (sd
+= \~69-\~74), meaning the size of the Q4 peak is less consistent across
+years than the actual seasonal shape itself.
+
+## Part 8: Would you detrend or transform the series before modelling it? Give a visual argument for your answer. Do not fit a model.
+
+```{r}
+autoplot(log(ausbeer))+
+  labs(title = "Log-transformed Australian Quarterly beer production", x = "Year", y = "log(Megalitres)")
+```
+
+```{r}
+log_beer_matrix = log(beer_matrix)
+log_sd = apply(log_beer_matrix, 1, sd)
+
+pander(data.frame(year= 1956:2009, raw_sd = yearly_standard_dev, log_sd = log_sd))
+```
+
+I would both transform and detrend the series, in that specific order,
+following the workflow from the time series lectures [3].
+
+A transform should be done first, part 4 showed that variability is not
+constant and broadly tracks the level of variability the series, early
+on it had low variability, high through the volatile 1970s-1990s
+plateau, and declining after. Plotting the log transformed Ausbeer and
+comparing with the original time series graph supports this
+transformation. In the raw plot, the variability grows larger through
+the volatile middle decades before shrinking again, whereas in the log
+transformed plot, the variability across the whole series looks much
+more even in size (despite a few outlier years \~2004).
+
+Detrending would also be necessary afterward, since Part 2, 6 and 7
+showed a clear, non-monotonic, long term trend that a variance
+stabilising transformation alone would not remove.
+
 # References:
 
 [1]
 <https://blogs.sas.com/content/iml/2017/05/24/definitions-sample-quantiles.html>
 \n
 [2]<https://www.amherst.edu/media/view/129116/original/Sample+Quantiles.pdf>
+
+[3] Time series slides - Alejandro C. Frery html, page 68
