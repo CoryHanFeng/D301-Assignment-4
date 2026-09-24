@@ -2,9 +2,11 @@
 title: "Data301 Assignment 4"
 author: "Cory Stalker"
 date: "2026-09-24"
-output: html_document
-editor_options: 
-  markdown: 
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
+  markdown:
     wrap: 72
 ---
 
@@ -44,7 +46,7 @@ Wicklin writes a general formula to cover all quantile estimates, q =
 (1-$\lambda$) x[j] + $\lambda$ x[j+1], where j depends on the values of
 p, N and m (j = floor(Np + m)). Wicklin compares the definitions
 visually on a 10-observation dataset and on 100 observations from a
-uniform distributions, also comparing the R and SAS defaults.
+uniform distribution, also comparing the R and SAS defaults.
 
 Wicklin notes that the rounding-based types return an observed value or
 the average of two neighbours, while the interpolation types may return
@@ -56,10 +58,10 @@ $\hat{\lambda}_{IQR}$(X) =
 $\frac{ln3}{q_{\frac{3}{4}}(X) - q_{\frac{1}{4}}(X)}$ The estimate of
 $\lambda$ is from the following: Type 2: $\frac{ln(3)}{4-1}$ =
 $\frac{1.098612}{3}$ = \~0.3662 (4dp) Type 7: $\frac{ln(3)}{3.5-1}$ =
-$\frac{1.098612}{2.5}$ = \~0.4394 (4dp) A difference of of \~0.0732
-(4dp) is observed between the two estimates of $\lambda$. Although
-Wicklin states that with n = 100 \~N(0, 1) the differences are nearly
-negligible.
+$\frac{1.098612}{2.5}$ = \~0.4394 (4dp) A difference of \~0.0732 (4dp)
+is observed between the two estimates of $\lambda$. Although Wicklin
+states that with n = 100 \~ random uniform distribution the differences
+are nearly negligible.
 
 The experiments Wicklin run show that the choice of quantile computation
 type matter for smaller samples. However for larger scale data, the
@@ -79,7 +81,7 @@ default type of order statistics.
 You suspect that $\hat{\lambda}_{IQR}$ is biased, so derive and
 implement a first-order bootstrap bias corrected estimator based on
 $\hat{\lambda}_{IQR}$. Denote it $\tilde{\lambda}$. You may fix the
-number of bootstrap replications in $𝐵$ = 200 for every input sample.
+number of bootstrap replications in $B$ = 200 for every input sample.
 
 Answer:
 
@@ -88,13 +90,12 @@ $\frac{ln3}{\hat{q}_{\frac{3}{4}}(X) - \hat{q}_{\frac{1}{4}}(X)}$ with
 quartiles be computed by type 8. For an estimator $\hat{\theta}$ of
 $\theta$, the bias is $B(\hat{\theta}) = E(\hat{\theta}) - \theta$, here
 $\theta = \lambda$ and $\hat{\theta} = \hat{\lambda}_{IQR}$. The bias
-$B(\hat{\lambda}_{IQR}) = E(\hat{\lambda}_{IQR}) - \lambda$ (Monte Carlo
-lecture, slide 21/34 (or pdf page 43), under the law
-$D(\lambda) = EXP(\lambda)$ of $X = (X_1,X_2...X_N)$. This can't be
+$B(\hat{\lambda}_{IQR}) = E(\hat{\lambda}_{IQR}) - \lambda$, under the
+law $D(\lambda) = EXP(\lambda)$ of $X = (X_1,X_2...X_N)$. This can't be
 computed because $D(\lambda)$ depends on the unknown $\lambda$,so I will
 estimate it by the bootstrap.I resample the observed x with replacement
-B = 200 times and calculate $\hat{\lambda}_{IQR}(x^{*(b)})$ (Monte Carlo
-slide 22 or pdf page 44), giving:
+B = 200 times, calculate $\hat{\lambda}_{IQR}(x^{*(b)})$ and average the
+stored replications [4], giving:
 
 $\hat{B}(\hat{\lambda}_{{IQR}}) = B^{-1} \sum_{b=1}^{B} \hat{\lambda}_{{IQR}}\bigl(x^{*(b)}\bigr) - \hat{\lambda}_{{IQR}}(x).$
 
@@ -120,7 +121,7 @@ x = rexp(30, rate = 1)
 c(lam_iqr = lambda_iqr(x), lam_tilde = lambda_tilde(x))
 ```
 
-## Part 3 (20%): Make a Monte Carlo experiment comparing these three estimators. Use as parameter space $\Lambda \times$ 𝑁, where $\lambda \in\Lambda$ = {.1, 1, 10} and $n \in$ 𝑁 = {5, 30, 100}. Use the mean square error as the sole metric for your analysis. Report your results. Justify your choice(s) of the number of replications for each $\lambda$ and each $n$. You may want to check the book by Robert & Casella (2009); it is available in our library.
+## Part 3 (20%): Make a Monte Carlo experiment comparing these three estimators. Use as parameter space $\Lambda \times$ N, where $\lambda \in\Lambda$ = {.1, 1, 10} and $n \in$ N = {5, 30, 100}. Use the mean square error as the sole metric for your analysis. Report your results. Justify your choice(s) of the number of replications for each $\lambda$ and each $n$. You may want to check the book by Robert & Casella (2009); it is available in our library.
 
 ```{r}
 set.seed(301)
@@ -179,8 +180,8 @@ run showed a median squared error of 91 but a mean of 40,638, dominated
 by a few extreme outliers (max value of 80658547). This might happen
 because bootstrap resamples of only 5 values contain repeats, which
 would produce a near-zero IQR and an extreme $\hat{\lambda}_{IQR}(x^*)$,
-which the bias correction then amplifies. Increasing R might not fix
-this and can create even larger outliers.
+which the bias correction then amplifies. Increasing R might not fix this
+and can create even larger outliers.
 
 #--------------------------------
 
@@ -195,12 +196,6 @@ ausbeer
 cat("Frequency:",frequency(ausbeer), "\n")
 cat("Start:",start(ausbeer),"\n")
 cat("End:",end(ausbeer))
-summary_df = data.frame(
-  Frequency = frequency(ausbeer),
-  Start = paste(start(ausbeer)),
-  End = paste(end(ausbeer))
-)
-
 
 autoplot(ausbeer) +
   labs(title = "Australian Quarterly Beer Production", x = "Year", y = "Megalitres") +
@@ -265,7 +260,7 @@ range_df = data.frame(
   range = yearly_range
 )
 
-pander(range_df, title = "Yearly Range of Beer Production")
+pander(range_df, caption = "Yearly Range of Beer Production")
 
 variability_df = data.frame(
   year = 1956:2009,
@@ -313,23 +308,23 @@ which.min(ausbeer)
 ausbeer[which.min(ausbeer)]
 ```
 
-There have been multiple strange observations discovered already in the
+There have been multiple unusual observations discovered already in the
 dataset:
 
 Using which.max() and which.min(), the global maximum is 599 megalitres
 in 1990 Q4, and the global minimum is 213 megalitres in 1956 Q2. The
-minimum is not particularly suprising as it is the start of the time
+minimum is not particularly surprising as it is the start of the time
 series, and consistent with the strong upward trend identified. The
 maximum point is quite interesting, in 1988 there is a peak of 598 and
 in 1990, there is the global peak of 599, both of these values are
 either near or record breaking Q4 values, with 1989 dropping back to 567
-in between. This represents an unsual pattern rather than a single
+in between. This represents an unusual pattern rather than a single
 isolated spike. This anomalous pattern is also shown in the within year
 variability identified in part 4, reinforcing that 1988-1990 was a
-strange period for the series.
+unusual period for the series.
 
 There is also a secondary unusual point in 2004 Q4 (454), which is 30-35
-megalitres below both the preceeding and following year's Q4 values (490
+megalitres below both the preceding and following year's Q4 values (490
 in 2003 and 482 in 2005), despite Q1-Q3 of 2004 being ordinary. This
 single low quarter explains the sharp dip in within-year variability
 seen around 2004 in the Part 4 Analysis.
@@ -425,7 +420,8 @@ stabilising transformation alone would not remove.
 
 [1]
 <https://blogs.sas.com/content/iml/2017/05/24/definitions-sample-quantiles.html>
-\n
 [2]<https://www.amherst.edu/media/view/129116/original/Sample+Quantiles.pdf>
 
 [3] Time series slides - Alejandro C. Frery html, page 68
+
+[4] Monte Carlo Slides - Alejandro C. Frery page 44/62 (or slide 22/34)
