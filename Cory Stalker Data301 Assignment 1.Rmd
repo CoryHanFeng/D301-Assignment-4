@@ -179,8 +179,8 @@ run showed a median squared error of 91 but a mean of 40,638, dominated
 by a few extreme outliers (max value of 80658547). This might happen
 because bootstrap resamples of only 5 values contain repeats, which
 would produce a near-zero IQR and an extreme $\hat{\lambda}_{IQR}(x^*)$,
-which the bias correction then amplifies. Increasing R does not fix this
-and can create even larger outliers.
+which the bias correction then amplifies. Increasing R might not fix
+this and can create even larger outliers.
 
 #--------------------------------
 
